@@ -35,7 +35,8 @@ def blackjack(bal, bet):
     bal -= bet
     deck = create_deck()
     player_hand = [deck.pop(), deck.pop()]
-    dealer_hand = [deck.pop(), deck.pop()]
+    #dealer_hand = [deck.pop(), deck.pop()]
+    dealer_hand = ['A', '10']
 
     print_hand(player_hand, "Player")
     print_hand([dealer_hand[0]], "Dealer")
@@ -52,8 +53,28 @@ def blackjack(bal, bet):
         print("Natural Blackjack! You win! Your balance is now " + str(bal))
         return
     
+    # Check for insurance
+    if dealer_hand[0] == 'A':
+        choice = input("Do you want to buy insurance? (y/n): ").lower()
+        if choice == 'y':
+            insurance_bet = bet / 2  # Insurance bet is half of the original bet
+            print(f"\nYou bought insurance for {insurance_bet}.")
+            # Check if the dealer has blackjack
+            if dealer_hand[1] in ['10', 'J', 'Q', 'K']:
+                bal += insurance_bet * 2  # Insurance pays 2 to 1 if dealer has blackjack
+                print("Dealer has blackjack! Insurance pays 2 to 1. Your balance is now " + str(bal))
+                print_hand(dealer_hand, "Dealer")
+                return
+            else:
+                print("Dealer doesn't have blackjack. You lose your insurance.")
+                bal -= insurance_bet
+        elif choice == 'n' and calculate_score(dealer_hand) == 21:
+            print("\nDealer has blackjack!. You lose immediately. Your balance is now " + str(bal))
+            print_hand(dealer_hand, "Dealer")
+            return
+   
     # First player choice includes the option to double down, surrender, and buy insurance if possible
-    choice = input("Do you want to hit, stand, double down, or surrender? (h/s/d/su): ").lower()
+    choice = input("Do you want to hit, stand, double down, surrender? (h/s/d/su): ").lower()
     if choice == 'd':
         bal -= bet
         bet *= 2
@@ -73,7 +94,7 @@ def blackjack(bal, bet):
         pass
     elif choice == 'su':
         bal += bet/2
-        print("You surrender. Half your bet is returned. Your balance is now " + str(bal))
+        print("\nYou surrender. Half your bet is returned. Your balance is now " + str(bal))
         print_hand(dealer_hand, "Dealer")
         return  # end the function, round is over.
     
