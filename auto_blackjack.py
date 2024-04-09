@@ -31,13 +31,13 @@ def print_hand(hand, name):
         print(card)
 
 # check for double down
-def check_doubleDown(player_hand, dealer_hand):
+def check_doubleDown(player_hand, dealer_hand, deck):
     player_score = calculate_score(player_hand)
     dealer_score = calculate_score(dealer_hand[0])
     
     if player_score == 9 and dealer_score in (3, 4, 5, 6):
         print('double down')
-    elif player_score == 10 and dealer_score in range (2, 10): # doesnt include 10
+    elif player_score == 10 and dealer_score in range (2, 10): # includes 2 but doesnt include 10
         print('double down')
     elif player_score == 11:
         print('double down')
@@ -45,6 +45,8 @@ def check_doubleDown(player_hand, dealer_hand):
     elif 'A' in player_hand:
         if "2" in player_hand and dealer_score in (5, 6):
             print('double down')
+            player_hand.append(deck.pop())
+            isStanding = True
         elif "3" in player_hand and dealer_score in (5, 6):
             print('double down')
         elif "4" in player_hand and dealer_score in (4, 6):
@@ -55,13 +57,15 @@ def check_doubleDown(player_hand, dealer_hand):
             print('double down')
         elif "7" in player_hand and dealer_score in (3, 6):
             print('double down')
-    
+    elif player_hand == ['5', '5'] and dealer_score in range (2,10):
+        print('double down')
+        
 
 # cpu plays blackjack with basic strategy
 def autoBlackjack_basic(bal, bet):
     bal -= bet
     deck = create_deck()
-    player_hand = ['A', '2']
+    player_hand = ['2', 'A']
     dealer_hand = ['5', '5']
     #dealer_hand = [deck.pop(), deck.pop()]
     
@@ -82,16 +86,21 @@ def autoBlackjack_basic(bal, bet):
     
     # no option for insurance since basic strat never buys insurance
     
-    check_doubleDown(player_hand, dealer_hand)
+    isStanding = False
     
+    check_doubleDown(player_hand, dealer_hand, deck)
+    
+
     # break loop when the player should stand
-    while True:
-        if calculate_score(player_hand) <= 8:
+
+    while isStanding == False:
+        if calculate_score(player_hand) <= 11:      # anytime under 11, player should hit. double down is already checked at this point.
             new_card = deck.pop()
             player_hand.append(new_card)
         else:
             print_hand(player_hand, "Player")
             print('Player done drawing cards.')
+            isStanding == True
             break
     
     # end of while loop. at this point, the player is done with their turn.
