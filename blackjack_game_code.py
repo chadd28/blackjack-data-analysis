@@ -35,9 +35,8 @@ def blackjack(bal, bet):
     bal -= bet
     deck = create_deck()
     player_hand = [deck.pop(), deck.pop()]
-    #dealer_hand = [deck.pop(), deck.pop()]
-    dealer_hand = ['A', '10']
-
+    dealer_hand = [deck.pop(), deck.pop()]
+    
     print_hand(player_hand, "Player")
     print_hand([dealer_hand[0]], "Dealer")
 
@@ -68,10 +67,14 @@ def blackjack(bal, bet):
             else:
                 print("Dealer doesn't have blackjack. You lose your insurance.")
                 bal -= insurance_bet
-        elif choice == 'n' and calculate_score(dealer_hand) == 21:
-            print("\nDealer has blackjack!. You lose immediately. Your balance is now " + str(bal))
-            print_hand(dealer_hand, "Dealer")
-            return
+                
+        elif choice == 'n':
+            if dealer_hand[1] in ['10', 'J', 'Q', 'K']:
+                print("\nDealer has blackjack!. You lose immediately. Your balance is now " + str(bal))
+                print_hand(dealer_hand, "Dealer")
+                return
+            else:
+                print("Dealer doesn't have blackjack.")
    
     # First player choice includes the option to double down, surrender, and buy insurance if possible
     choice = input("Do you want to hit, stand, double down, surrender? (h/s/d/su): ").lower()
@@ -125,7 +128,10 @@ def blackjack(bal, bet):
             new_card = deck.pop()
             dealer_hand.append(new_card)
             print("\nDealer draws:", new_card)
+            
+        # all drawing cards are done. calculate final scores    
         dealer_score = calculate_score(dealer_hand)
+        player_score = calculate_score(player_hand)
         print("\nDealer's score:", dealer_score)
         
         if dealer_score > 21:
