@@ -1,3 +1,9 @@
+"""
+Rules: 
+- no splitting twice in a row
+- no surrendering after a split
+"""
+
 import random
 
 def create_deck():
@@ -141,7 +147,13 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):     # only allow split
         hand2_score = calculate_score(hand2)
         print('\nValue of hand 1: ' + str(hand1_score) + '\nValue of hand 2: ' + str(hand2_score))
 
-        # dealer plays
+        # dealer DOES NOT play when you bust both hands
+        if hand1_score > 21 and hand2_score > 21:
+            print("Both of your hands busted! Your balance is now " + str(bal))
+            print_hand(dealer_hand, "Dealer")
+            return
+
+        # dealer plays assuming you didn't bust both hands
         print_hand(dealer_hand, "Dealer")
         while calculate_score(dealer_hand) < 17:
             new_card = deck.pop()
@@ -157,13 +169,17 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):     # only allow split
 
         if hand1_score <= 21:
             if dealer_score > 21:    
-                bal += bet*2
-                print("Dealer busted! Your balance is now " + str(bal))
+                if naturalBJ_1 == True:      # checks if your hand was a natural blackjack when the dealer busts
+                    bal += bet*2.5
+                    print("Your first hand's natural blackjack pays 3:2. Your balance is now " + str(bal))
+                else:
+                    bal += bet*2
+                    print("Dealer busted! Your balance is now " + str(bal))
             elif dealer_score == hand1_score:
                 bal += bet
                 print("Your first hand was a tie. Your balance is now " + str(bal))
             elif naturalBJ_1 == True:          # checks if the hand score was a natural blackjack or not
-                bal += bet*3
+                bal += bet*2.5
                 print("Your first hand's natural blackjack pays 3:2. Your balance is now " + str(bal))
             elif dealer_score > hand1_score:
                 print("Dealer wins against your first hand! Your balance is now " + str(bal))
@@ -182,13 +198,17 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):     # only allow split
 
         if hand2_score <= 21:
             if dealer_score > 21:           
-                bal += bet*2
-                print("Dealer busted! Your balance is now " + str(bal))
+                if naturalBJ_2 == True:      # checks if your hand was a natural blackjack when the dealer busts
+                    bal += bet*2.5
+                    print("Your first hand's natural blackjack pays 3:2. Your balance is now " + str(bal))
+                else:
+                    bal += bet*2
+                    print("Dealer busted! Your balance is now " + str(bal))
             elif dealer_score == hand2_score:
                 bal += bet
                 print("Your second hand was a tie. Your balance is now " + str(bal))
             elif naturalBJ_2 == True:
-                bal += bet*3
+                bal += bet*2.5
                 print("Your second hand's natural blackjack pays 3:2. Your balance is now " + str(bal))
             elif dealer_score > hand2_score:
                 print("Dealer wins against your second hand! Your balance is now " + str(bal))
@@ -219,7 +239,7 @@ def blackjack(bal, bet):
         print("Both player and dealer have a natural Blackjack. It's a tie! Your balance is now " + str(bal))
         return
     if player_score == 21 and dealer_score != 21:
-        bal += bet*3
+        bal += bet*2.5
         print("Natural Blackjack pays 3:2! You win! Your balance is now " + str(bal))
         return
     
