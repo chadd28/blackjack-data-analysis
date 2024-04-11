@@ -8,16 +8,16 @@ Rules:
 
 import random
 
-def create_deck():
-    """Create a standard 52-card deck."""
+# creates the shoe. Can customize number of decks
+def create_shoe(count):
     ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-    deck = ranks * 32
-    random.shuffle(deck)
-    return deck
+    shoe = ranks * 4 * count
+    random.shuffle(shoe)
+    return shoe
 
 # takes in a hand and count, adds another card to hand and updates the count.
-def draw_card(hand, deck, totalCount):
-    new_card = deck.pop()
+def draw_card(hand, shoe, totalCount):
+    new_card = shoe.pop()
     totalCount += count([new_card])
     hand.append(new_card)
     return totalCount
@@ -54,13 +54,13 @@ def print_hand(hand, name):
     for card in hand:
         print(card)
 
-def round_summary(player_hand, dealer_hand, totalCount, deck, bal):
+def round_summary(player_hand, dealer_hand, totalCount, shoe, bal):
     # print('Round Summary:')
     # print_hand(player_hand, 'Player')
     # print_hand(dealer_hand, 'Dealer')
     # print('Current balance: ' + str(bal))
     # print('Running Count at end of round: ' + str(totalCount))
-    # print("Number of cards left in the deck:", len(deck))
+    # print("Number of cards left in the shoe:", len(shoe))
     # print('--------------')
     pass
 
@@ -131,38 +131,38 @@ def check_split(player_hand, dealer_hand):
     else:
         return False
     
-def check_hit(player_hand, dealer_hand, deck, totalCount):
+def check_hit(player_hand, dealer_hand, shoe, totalCount):
     player_score = calculate_score(player_hand)
     dealer_score = calculate_score([dealer_hand[0]])   # temporarily sets dealer_score to just score of visible card
 
         # this contains when the player should hit, given they didn't already double down, surrender, or split
     if player_score <= 11:                                
-        totalCount = draw_card(player_hand, deck, totalCount)
+        totalCount = draw_card(player_hand, shoe, totalCount)
         return False, totalCount
 
     elif len(player_hand) == 2 and calculate_score([player_hand[0]]) == calculate_score([player_hand[1]]):    # checks hands with a pair ONLY if you have 2 cards
         if player_score <= 17:               # also takes in scenario of (A, A) = 12
-            totalCount = draw_card(player_hand, deck, totalCount)
+            totalCount = draw_card(player_hand, shoe, totalCount)
             return False, totalCount
         elif player_score == 18 and dealer_score in (2, 3, 4, 5, 6, 8, 9):
-            totalCount = draw_card(player_hand, deck, totalCount)
+            totalCount = draw_card(player_hand, shoe, totalCount)
             return False, totalCount
         else:            
             return True, totalCount
 
     elif player_score == 12 and dealer_score in (2, 3, 7, 8, 9, 10, 11):
-        totalCount = draw_card(player_hand, deck, totalCount)
+        totalCount = draw_card(player_hand, shoe, totalCount)
         return False, totalCount
     elif player_score in range (13, 17) and dealer_score in range (7, 12):
-        totalCount = draw_card(player_hand, deck, totalCount)
+        totalCount = draw_card(player_hand, shoe, totalCount)
         return False, totalCount
 
     elif 'A' in player_hand:                                                        # checks values with an Ace, a soft hit
         if player_score in range (13, 18):
-            totalCount = draw_card(player_hand, deck, totalCount)
+            totalCount = draw_card(player_hand, shoe, totalCount)
             return False, totalCount
         elif player_score == 18:
-            totalCount = draw_card(player_hand, deck, totalCount)
+            totalCount = draw_card(player_hand, shoe, totalCount)
             return False, totalCount
         else:
             return True, totalCount
@@ -171,10 +171,15 @@ def check_hit(player_hand, dealer_hand, deck, totalCount):
         return True, totalCount
     
 
-def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
+def split_hand(player_hand, dealer_hand, shoe, bal, bet, totalCount):
+    global numNaturalBlackjacks      
+    global numDoubleDowns
+    global numDoubleDownsWins
+    global numDoubleDownsLosses
+
     # deal with hand 1
     hand1 = [player_hand[0]]
-    totalCount = draw_card(hand1, deck, totalCount)
+    totalCount = draw_card(hand1, shoe, totalCount)
     
     doubledDown_1 = False
     naturalBJ_1 = False
@@ -182,6 +187,7 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
     # Check for natural blackjack
     hand1_score = calculate_score(hand1)
     if hand1_score == 21:        # no need to check dealer since that was checked at beginning of game
+        numNaturalBlackjacks += 1
         naturalBJ_1 = True
     
     if naturalBJ_1 == False:   # only continue if player didn't get a natural blackjack
@@ -189,27 +195,29 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
     
         shouldDoubleDown = check_doubleDown(hand1, dealer_hand)
         if shouldDoubleDown == True:
+            numDoubleDowns += 1
             doubledDown_1 = True
             bal -= bet
-            totalCount = draw_card(hand1, deck, totalCount)
+            totalCount = draw_card(hand1, shoe, totalCount)
             isStanding = True
     
         # break loop when the player should stand
         while isStanding == False:
-            isStanding, totalCount = check_hit(hand1, dealer_hand, deck, totalCount)
+            isStanding, totalCount = check_hit(hand1, dealer_hand, shoe, totalCount)
         
         # end of while loop. at this point, the player is done with their turn.
 
 
     # deal with hand2
     hand2 = [player_hand[1]]
-    totalCount = draw_card(hand2, deck, totalCount)
+    totalCount = draw_card(hand2, shoe, totalCount)
     
     doubledDown_2 = False
     naturalBJ_2 = False
 
     hand2_score = calculate_score(hand2)
-    if hand2_score == 21:        # no need to check dealer since that was checked at beginning of game
+    if hand2_score == 21:        # no need to check dealer since that was checked at beginning of game     
+        numNaturalBlackjacks += 1
         naturalBJ_2 = True
     
     if naturalBJ_2 == False:   # only continue if player didn't get a natural blackjack
@@ -217,14 +225,15 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
     
         shouldDoubleDown = check_doubleDown(hand2, dealer_hand)
         if shouldDoubleDown == True:
+            numDoubleDowns += 1
             doubledDown_2 = True
             bal -= bet
-            totalCount = draw_card(hand2, deck, totalCount)
+            totalCount = draw_card(hand2, shoe, totalCount)
             isStanding = True
     
         # break loop when the player should stand
         while isStanding == False:
-            isStanding, totalCount = check_hit(hand2, dealer_hand, deck, totalCount)
+            isStanding, totalCount = check_hit(hand2, dealer_hand, shoe, totalCount)
         
         # end of while loop. at this point, the player is done with their turn.
 
@@ -235,13 +244,13 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
     # dealer DOES NOT play when you bust both hands
     if hand1_score > 21 and hand2_score > 21:
         totalCount += count([dealer_hand[1]])
-        round_summary(player_hand, dealer_hand, totalCount, deck, bal)
-        return bal, bet, deck, totalCount
+        round_summary(player_hand, dealer_hand, totalCount, shoe, bal)
+        return bal, bet, shoe, totalCount
 
     # dealer drawing cards algorithm assuming you didn't bust both hands
     if calculate_score(player_hand) <= 21:
         while calculate_score(dealer_hand) < 17:
-            new_card = deck.pop()
+            new_card = shoe.pop()
             dealer_hand.append(new_card)
             totalCount += count([new_card])
         dealer_score = calculate_score(dealer_hand)
@@ -257,15 +266,23 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
                     bal += bet*2.5
                 else:
                     bal += bet*2
+                    if doubledDown_1 == True:
+                        numDoubleDownsWins += 1
             elif dealer_score == hand1_score:   # checks a tie
                 bal += bet
             elif naturalBJ_1 == True:          # checks if the hand score was a natural blackjack or not
                 bal += bet*2.5
             elif dealer_score > hand1_score:     # checks if dealer beat player
+                if doubledDown_1 == True:
+                        numDoubleDownsLosses += 1
                 pass
             else:
                 bal += bet*2
+                if doubledDown_1 == True:
+                        numDoubleDownsWins += 1
         else:
+            if doubledDown_1 == True:
+                        numDoubleDownsLosses += 1
             pass
 
         # checks second hand with dealer
@@ -280,15 +297,23 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
                     bal += bet*2.5
                 else:
                     bal += bet*2
+                    if doubledDown_2 == True:
+                        numDoubleDownsWins += 1
             elif dealer_score == hand2_score:
                 bal += bet
             elif naturalBJ_2 == True:
                 bal += bet*2.5
             elif dealer_score > hand2_score:
+                if doubledDown_2 == True:
+                    numDoubleDownsLosses += 1
                 pass
             else:
                 bal += bet*2
+                if doubledDown_2 == True:
+                    numDoubleDownsWins += 1
         else:
+            if doubledDown_2 == True:
+                numDoubleDownsLosses += 1
             pass
         
     # print('Round Summary (split):')
@@ -297,33 +322,39 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount):
     # print_hand(dealer_hand, 'Dealer')
     # print('Current balance: ' + str(bal))
     # print('Running Count at end of round: ' + str(totalCount))
-    # print("Number of cards left in the deck:", len(deck))
+    # print("Number of cards left in the shoe:", len(shoe))
     # print('--------------')
-    return bal, bet, deck, totalCount
+    return bal, bet, shoe, totalCount
         
 
 # cpu plays blackjack with basic strategy
-def autoBlackjack_basic(bal, bet, deck, totalCount):
+def autoBlackjack_basic(bal, bet, shoe, totalCount):
+    original_bet = bet
     bal -= bet
-    player_hand = [deck.pop(), deck.pop()]
-    dealer_hand = [deck.pop(), deck.pop()]
+    player_hand = [shoe.pop(), shoe.pop()]
+    dealer_hand = [shoe.pop(), shoe.pop()]
 
     totalCount = totalCount + count(player_hand) + count([dealer_hand[0]])
 
 
     # Check for player having a natural blackjack
+    global numNaturalBlackjacks 
     player_score = calculate_score(player_hand)
     dealer_score = calculate_score(dealer_hand)
     if player_score == 21 and dealer_score == 21:
         bal += bet
-        totalCount += count([dealer_hand[1]])
-        round_summary(player_hand, dealer_hand, totalCount, deck, bal)
-        return bal, bet, deck, totalCount
+        totalCount += count([dealer_hand[1]])     
+        numNaturalBlackjacks += 1
+        round_summary(player_hand, dealer_hand, totalCount, shoe, bal)
+        bet = original_bet 
+        return bal, bet, shoe, totalCount
     if player_score == 21 and dealer_score != 21:
         bal += bet*2.5
-        totalCount += count([dealer_hand[1]])
-        round_summary(player_hand, dealer_hand, totalCount, deck, bal)
-        return bal, bet, deck, totalCount
+        totalCount += count([dealer_hand[1]])    
+        numNaturalBlackjacks += 1
+        round_summary(player_hand, dealer_hand, totalCount, shoe, bal)
+        bet = original_bet 
+        return bal, bet, shoe, totalCount
     
     # no option for insurance since basic strat never buys insurance
     
@@ -331,28 +362,36 @@ def autoBlackjack_basic(bal, bet, deck, totalCount):
     
     shouldDoubleDown = check_doubleDown(player_hand, dealer_hand)
     if shouldDoubleDown == True:
+        global numDoubleDowns        # makes this variable accessable everywhere
+        numDoubleDowns += 1
         bal -= bet
         bet *= 2
-        totalCount = draw_card(player_hand, deck, totalCount)
+        totalCount = draw_card(player_hand, shoe, totalCount)
         isStanding = True
 
     shouldSplit = check_split(player_hand, dealer_hand)
     if shouldSplit == True:
+        global numSplits       
+        numSplits += 1
         bal -= bet
-        bal, bet, deck, totalCount = split_hand(player_hand, dealer_hand, deck, bal, bet, totalCount)  
-        return bal, bet, deck, totalCount
+        bal, bet, shoe, totalCount = split_hand(player_hand, dealer_hand, shoe, bal, bet, totalCount)
+        bet = original_bet  
+        return bal, bet, shoe, totalCount
     
     shouldSurrender = check_surrender(player_hand, dealer_hand)
     if shouldSurrender == True:
+        global numSurrenders       
+        numSurrenders += 1
         bal += bet/2
         totalCount += count([dealer_hand[1]])
-        round_summary(player_hand, dealer_hand, totalCount, deck, bal)
-        return bal, bet, deck, totalCount # end the function, round is over.
+        round_summary(player_hand, dealer_hand, totalCount, shoe, bal)
+        bet = original_bet 
+        return bal, bet, shoe, totalCount # end the function, round is over.
 
 
     # break loop when the player should stand
     while isStanding == False:
-        isStanding, totalCount = check_hit(player_hand, dealer_hand, deck, totalCount)
+        isStanding, totalCount = check_hit(player_hand, dealer_hand, shoe, totalCount)
     
     # end of while loop. at this point, the player is done with their turn.
 
@@ -363,7 +402,7 @@ def autoBlackjack_basic(bal, bet, deck, totalCount):
     # dealer drawing cards algorithm
     if calculate_score(player_hand) <= 21:
         while calculate_score(dealer_hand) < 17:
-            new_card = deck.pop()
+            new_card = shoe.pop()
             dealer_hand.append(new_card)
             totalCount += count([new_card])
             
@@ -372,36 +411,76 @@ def autoBlackjack_basic(bal, bet, deck, totalCount):
         player_score = calculate_score(player_hand)
         totalCount += count([dealer_hand[1]])
         
+        global numDoubleDownsWins
+        global numDoubleDownsLosses
         if dealer_score > 21:
+            if shouldDoubleDown == True:
+                numDoubleDownsWins += 1
             bal += bet*2
         elif dealer_score == player_score:
             bal += bet
         elif dealer_score > player_score:
+            if shouldDoubleDown == True:
+                numDoubleDownsLosses += 1
             pass
         else:
+            if shouldDoubleDown == True:
+                numDoubleDownsWins += 1
             bal += bet*2
     
-    round_summary(player_hand, dealer_hand, totalCount, deck, bal)
-    return bal, bet, deck, totalCount
-    
+    round_summary(player_hand, dealer_hand, totalCount, shoe, bal)
+    bet = original_bet   # resets bet to original value (if double downs increased the bet)
+    return bal, bet, shoe, totalCount
 
-deck = create_deck()
 
+# ------- ACTUAL MAIN RUNNING CODE ------- #
 totalCount = 0
-bal = 100       # player balance
-bet = 10        # bet per round
-rounds = 25     # amount of rounds to simulate
+numDecks = 6        # number of decks in shoe
+penetration = 0.75  # penetration of shoe before shoe resets
+bal = 1000          # player balance
+bet = 30            # bet per round
+rounds = 1000         # number of rounds to simulate
 
-print("\nBalance starts at " + str(bal) + ". Each bet is " + str(bet))
+# other statistics
+numShoeResets = 0
+numSplits = 0
+numDoubleDowns = 0
+numDoubleDownsWins = 0
+numDoubleDownsLosses = 0
+numSurrenders = 0
+numNaturalBlackjacks = 0
+maxCount = 0
+minCount = float('inf')
 
+print(f'\nWe are playing Blackjack with {numDecks} deck(s) and a shoe penetration of {penetration*100}%.')
+print("Balance starts at " + str(bal) + ". Each bet is " + str(bet))
+shoe = create_shoe(numDecks)
 
-for _ in range(rounds):
-    bal, bet, deck, totalCount = autoBlackjack_basic(bal, bet, deck, totalCount)
+for i in range(rounds):
+    #print('Round #' + str(i))
+    bal, bet, shoe, totalCount = autoBlackjack_basic(bal, bet, shoe, totalCount)     # oops i didn't learn global variables before this 
+    
+    if totalCount > maxCount:
+        maxCount = totalCount
+    if totalCount < minCount:
+        minCount = totalCount
+
+    if len(shoe) < (1-penetration) * (numDecks * 52):     # if the number of cards remaining in the shoe is less than x% of all decks, reset shoe
+        shoe = create_shoe(numDecks)
+        totalCount = 0
+        numShoeResets += 1
 
 print('\nSummary after ' + str(rounds) + ' rounds of Blackjack:')
-print('Current balance: ' + str(bal))
-print('Running Count at end of round: ' + str(totalCount))
-print("Number of cards left in the deck:", len(deck))
+print('Current balance: $' + str(bal))
+print(f"Running Count of current shoe: {totalCount}    |    Cards left in current shoe: {len(shoe)}    |    Num of shoe resets: {numShoeResets}")
 
+print(f"""
+Other Statistics:
+Splits: {numSplits}    |    Double Downs: {numDoubleDowns}    |    Surrenders: {numSurrenders}    |    Natural BJs: {numNaturalBlackjacks}   
+                Double Down Wins: {numDoubleDownsWins}
+                Double Down Losses: {numDoubleDownsLosses}
+
+Max Count: {maxCount}    |    Min Count: {minCount}
+""")
 
 
