@@ -231,16 +231,18 @@ def blackjack(bal, bet):
     print_hand(player_hand, "Player")
     print_hand([dealer_hand[0]], "Dealer")      # pass the dealer hand item as a list of length 1
 
-    # Check for natural blackjack
+    # Check for player having a natural blackjack
     player_score = calculate_score(player_hand)
     dealer_score = calculate_score(dealer_hand)
     if player_score == 21 and dealer_score == 21:
         bal += bet
         print("Both player and dealer have a natural Blackjack. It's a tie! Your balance is now " + str(bal))
+        print_hand(dealer_hand, "Dealer")
         return
     if player_score == 21 and dealer_score != 21:
         bal += bet*2.5
         print("Natural Blackjack pays 3:2! You win! Your balance is now " + str(bal))
+        print_hand(dealer_hand, "Dealer")
         return
     
     # Check for insurance

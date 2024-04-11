@@ -144,6 +144,7 @@ def check_hit(player_hand, dealer_hand, deck):
     
 
 def split_hand(player_hand, dealer_hand, deck, bal, bet):
+    # deal with hand 1
     hand1 = [player_hand[0], deck.pop()]
     print_hand(hand1, "Hand 1")
     
@@ -161,8 +162,8 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):
     
         shouldDoubleDown = check_doubleDown(hand1, dealer_hand)
         if shouldDoubleDown == True:
+            doubledDown_1 = True
             bal -= bet
-            bet *= 2
             print('You double down your first hand with $' + str(bet) + '. Your balance is now ' + str(bal))
             hand1.append(deck.pop())
             print_hand(hand1, "Hand 1")
@@ -194,8 +195,8 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):
     
         shouldDoubleDown = check_doubleDown(hand2, dealer_hand)
         if shouldDoubleDown == True:
+            doubledDown_2 = True
             bal -= bet
-            bet *= 2
             print('You double down your second hand with $' + str(bet) + '. Your balance is now ' + str(bal))
             hand2.append(deck.pop())
             print_hand(hand2, "Hand 2")
@@ -208,6 +209,7 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):
         # end of while loop. at this point, the player is done with their turn.
         print_hand(hand2, "Hand 2")
         print('Hand 2 done.')
+
 
     hand1_score = calculate_score(hand1)
     hand2_score = calculate_score(hand2)
@@ -293,23 +295,24 @@ def split_hand(player_hand, dealer_hand, deck, bal, bet):
 def autoBlackjack_basic(bal, bet):
     bal -= bet
     deck = create_deck()
-    player_hand = ['A', 'A']
-    dealer_hand = ['K', '2']
-    #dealer_hand = [deck.pop(), deck.pop()]
+    player_hand = [deck.pop(), deck.pop()]
+    dealer_hand = [deck.pop(), deck.pop()]
     
     print_hand(player_hand, "Player")
     print_hand([dealer_hand[0]], "Dealer")
 
-    # Check for natural blackjack
+    # Check for player having a natural blackjack
     player_score = calculate_score(player_hand)
     dealer_score = calculate_score(dealer_hand)
     if player_score == 21 and dealer_score == 21:
         bal += bet
         print("Both player and dealer have a natural Blackjack. It's a tie!. Your balance is now " + str(bal))
+        print_hand(dealer_hand, "Dealer")
         return
     if player_score == 21 and dealer_score != 21:
-        bal += bet*2
+        bal += bet*2.5
         print("Natural Blackjack pays 3:2! You win! Your balance is now " + str(bal))
+        print_hand(dealer_hand, "Dealer")
         return
     
     # no option for insurance since basic strat never buys insurance
@@ -324,13 +327,6 @@ def autoBlackjack_basic(bal, bet):
         player_hand.append(deck.pop())
         print_hand(player_hand, "Player")
         isStanding = True
-    
-    shouldSurrender = check_surrender(player_hand, dealer_hand)
-    if shouldSurrender == True:
-        bal += bet/2
-        print("\nYou surrender. Half your bet is returned. Your balance is now " + str(bal))
-        print_hand(dealer_hand, "Dealer")
-        return  # end the function, round is over.
 
     shouldSplit = check_split(player_hand, dealer_hand)
     if shouldSplit == True:
@@ -338,6 +334,13 @@ def autoBlackjack_basic(bal, bet):
         print('You split your cards and bet another ' + str(bet) + '. Your balance is now ' + str(bal))
         split_hand(player_hand, dealer_hand, deck, bal, bet)  
         return
+    
+    shouldSurrender = check_surrender(player_hand, dealer_hand)
+    if shouldSurrender == True:
+        bal += bet/2
+        print("\nYou surrender. Half your bet is returned. Your balance is now " + str(bal))
+        print_hand(dealer_hand, "Dealer")
+        return  # end the function, round is over.
 
 
     # break loop when the player should stand
