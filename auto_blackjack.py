@@ -1,5 +1,6 @@
 """
 This version doesn't include print statements for the game, just results.
+Running count is kept track of but doesn't affect play
 
 Rules: 
 - no splitting twice in a row
@@ -434,53 +435,80 @@ def autoBlackjack_basic(bal, bet, shoe, totalCount):
 
 
 # ------- ACTUAL MAIN RUNNING CODE ------- #
-totalCount = 0
+totalCount = 0      # running count
+trueCount = 0
 numDecks = 6        # number of decks in shoe
 penetration = 0.75  # penetration of shoe before shoe resets
 bal = 1000          # player balance
-bet = 30            # bet per round
-rounds = 1000         # number of rounds to simulate
+bet = 10            # bet per round
+og_bal, og_bet = bal, bet
+rounds = 200         # number of rounds to simulate
+numSim = 1           # number of simulations
 
 # other statistics
 numShoeResets = 0
 numSplits = 0
-numDoubleDowns = 0
+numDoubleDowns = 0              # note: wins+losses may not always equal total num of double downs since there can be pushes (ties)
 numDoubleDownsWins = 0
 numDoubleDownsLosses = 0
 numSurrenders = 0
 numNaturalBlackjacks = 0
-maxCount = 0
-minCount = float('inf')
+numBankrupts = 0
+maxTrueCount = 0
+minTrueCount = float('inf')
+totalBal = 0                  # only used when you repeat the simulation
 
-print(f'\nWe are playing Blackjack with {numDecks} deck(s) and a shoe penetration of {penetration*100}%.')
-print("Balance starts at " + str(bal) + ". Each bet is " + str(bet))
+print(f'\nSimulation is playing Blackjack with {numDecks} deck(s) and a shoe penetration of {penetration*100}%.')
+print("Balance starts at $" + str(bal) + ". Each bet is $" + str(bet))
 shoe = create_shoe(numDecks)
 
-for i in range(rounds):
-    #print('Round #' + str(i))
-    bal, bet, shoe, totalCount = autoBlackjack_basic(bal, bet, shoe, totalCount)     # oops i didn't learn global variables before this 
-    
-    if totalCount > maxCount:
-        maxCount = totalCount
-    if totalCount < minCount:
-        minCount = totalCount
+for _ in range(numSim):
+    bal, bet = og_bal, og_bet
+    for i in range(rounds):
+        #print('Round #' + str(i))
+        bal, bet, shoe, totalCount = autoBlackjack_basic(bal, bet, shoe, totalCount)     # oops i didn't learn global variables before this 
+        trueCount = totalCount / (len(shoe) / 52)
+        
+        if trueCount > maxTrueCount:                           # updates min/max counts
+            maxTrueCount = trueCount
+        if trueCount < minTrueCount:
+            minTrueCount = trueCount
 
-    if len(shoe) < (1-penetration) * (numDecks * 52):     # if the number of cards remaining in the shoe is less than x% of all decks, reset shoe
-        shoe = create_shoe(numDecks)
-        totalCount = 0
-        numShoeResets += 1
+        if bal < 0:
+            print(f'\n!!! You went bankrupt after {i} rounds !!!')
+            numBankrupts += 1
+            break
 
-print('\nSummary after ' + str(rounds) + ' rounds of Blackjack:')
-print('Current balance: $' + str(bal))
-print(f"Running Count of current shoe: {totalCount}    |    Cards left in current shoe: {len(shoe)}    |    Num of shoe resets: {numShoeResets}")
+        #UNCOMMENT THIS IF YOU WANT TO ADJUST BET SPREAD WITH TRUE COUNT
+        # if trueCount < 2:
+        #     bet = 10
+        # elif 2 < trueCount < 3:
+        #     bet = 20
+        # elif 3 < trueCount < 4:
+        #     bet = 30
+        # elif 4 < trueCount < 5:
+        #     bet = 40
+        # elif trueCount > 5:
+        #     bet = 50
+
+        if len(shoe) < (1-penetration) * (numDecks * 52):     # reset shoe if the number of cards remaining in the shoe is less than x% of all decks
+            shoe = create_shoe(numDecks)
+            totalCount = 0
+            numShoeResets += 1
+    totalBal += bal
+
+print(f'\n---------- {rounds} Rounds of Blackjack Summary ({numSim} Simulations) ----------')
+print('Final balance: $' + str(bal))
+#print(f"Running Count of current shoe: {totalCount}    |    Cards left in current shoe: {len(shoe)}    |    Num of shoe resets: {numShoeResets}")
 
 print(f"""
-Other Statistics:
-Splits: {numSplits}    |    Double Downs: {numDoubleDowns}    |    Surrenders: {numSurrenders}    |    Natural BJs: {numNaturalBlackjacks}   
+Statistics:
+Splits: {numSplits}    |    Double Downs: {numDoubleDowns}    |    Surrenders: {numSurrenders}    |    Natural BJs: {numNaturalBlackjacks}    |    Bankrupts: {numBankrupts} 
                 Double Down Wins: {numDoubleDownsWins}
                 Double Down Losses: {numDoubleDownsLosses}
 
-Max Count: {maxCount}    |    Min Count: {minCount}
+Max True Count: {round(maxTrueCount, 2)}    |    Min True Count: {round(minTrueCount, 2)}
+Total Balance: {totalBal}
+Profit Margin: {round((totalBal/(numSim*og_bal)) - 1, 4)*100}%
+Risk of Ruin: {round(numBankrupts/numSim, 2)*100}%
 """)
-
-
